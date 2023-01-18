@@ -1,4 +1,5 @@
 '''
+
 import cv2
 import numpy as np
 import dlib
@@ -12,16 +13,9 @@ def extract_index_nparray(nparray):
         break
     return index
 
-
-# img = cv2.imread("bradley_cooper.jpg")
-# img , img2 = cv2.imread("open.jpg"), cv2.imread("close.jpg")
 img , img2 = cv2.imread("steve-jobs1.jpg"), cv2.imread("steve-jobs2.jpg")
-# img = cv2.imread("musk.jpg")
-# img = cv2.imread("musk1.jpg")
 img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 mask = np.zeros_like(img_gray)
-# img2 = cv2.imread("jim_carrey.jpg")
-# img2 = cv2.imread("close.jpg")
 img2_gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 
 
@@ -30,10 +24,6 @@ predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 height, width, channels = img2.shape
 img2_new_face = np.zeros((height, width, channels), np.uint8)
 
-
-
-
-# Face 1
 faces = detector(img_gray)
 for face in faces:
     landmarks = predictor(img_gray, face)
@@ -42,17 +32,13 @@ for face in faces:
         x = landmarks.part(n).x
         y = landmarks.part(n).y
         landmarks_points.append((x, y))
-
-
-
+        
     points = np.array(landmarks_points, np.int32)
     convexhull = cv2.convexHull(points)
-    # cv2.polylines(img, [convexhull], True, (255, 0, 0), 3)
     cv2.fillConvexPoly(mask, convexhull, 255)
 
     face_image_1 = cv2.bitwise_and(img, img, mask=mask)
 
-    # Delaunay triangulation
     rect = cv2.boundingRect(convexhull)
     subdiv = cv2.Subdiv2D(rect)
     subdiv.insert(landmarks_points)
@@ -79,9 +65,6 @@ for face in faces:
             triangle = [index_pt1, index_pt2, index_pt3]
             indexes_triangles.append(triangle)
 
-
-
-# Face 2
 faces2 = detector(img2_gray)
 for face in faces2:
     landmarks = predictor(img2_gray, face)
@@ -97,7 +80,7 @@ for face in faces2:
 
 lines_space_mask = np.zeros_like(img_gray)
 lines_space_new_face = np.zeros_like(img2)
-# Triangulation of both faces
+
 for triangle_index in indexes_triangles:
     # Triangulation of the first face
     tr1_pt1 = landmarks_points[triangle_index[0]]
@@ -118,13 +101,11 @@ for triangle_index in indexes_triangles:
 
     cv2.fillConvexPoly(cropped_tr1_mask, points, 255)
 
-    # Lines space
     cv2.line(lines_space_mask, tr1_pt1, tr1_pt2, 255)
     cv2.line(lines_space_mask, tr1_pt2, tr1_pt3, 255)
     cv2.line(lines_space_mask, tr1_pt1, tr1_pt3, 255)
     lines_space = cv2.bitwise_and(img, img, mask=lines_space_mask)
 
-    # Triangulation of second face
     tr2_pt1 = landmarks_points2[triangle_index[0]]
     tr2_pt2 = landmarks_points2[triangle_index[1]]
     tr2_pt3 = landmarks_points2[triangle_index[2]]
@@ -142,14 +123,12 @@ for triangle_index in indexes_triangles:
 
     cv2.fillConvexPoly(cropped_tr2_mask, points2, 255)
 
-    # Warp triangles
     points = np.float32(points)
     points2 = np.float32(points2)
     M = cv2.getAffineTransform(points, points2)
     warped_triangle = cv2.warpAffine(cropped_triangle, M, (w, h))
     warped_triangle = cv2.bitwise_and(warped_triangle, warped_triangle, mask=cropped_tr2_mask)
 
-    # Reconstructing destination face
     img2_new_face_rect_area = img2_new_face[y: y + h, x: x + w]
     img2_new_face_rect_area_gray = cv2.cvtColor(img2_new_face_rect_area, cv2.COLOR_BGR2GRAY)
     _, mask_triangles_designed = cv2.threshold(img2_new_face_rect_area_gray, 1, 255, cv2.THRESH_BINARY_INV)
@@ -157,10 +136,7 @@ for triangle_index in indexes_triangles:
 
     img2_new_face_rect_area = cv2.add(img2_new_face_rect_area, warped_triangle)
     img2_new_face[y: y + h, x: x + w] = img2_new_face_rect_area
-
-
-
-# Face swapped (putting 1st face into 2nd face)
+    
 img2_face_mask = np.zeros_like(img2_gray)
 img2_head_mask = cv2.fillConvexPoly(img2_face_mask, convexhull2, 255)
 img2_face_mask = cv2.bitwise_not(img2_head_mask)
@@ -180,12 +156,8 @@ cv2.imshow("result", result)
 cv2.imshow("seamlessclone", seamlessclone)
 
 cv2.imwrite('ResultImage/Result_Image.png',seamlessclone)
-
 cv2.waitKey(0)
-
-
-
 cv2.destroyAllWindows()
 
-# python Best_Image_swap.py
+
 '''
